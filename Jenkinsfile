@@ -1,64 +1,55 @@
 pipeline {
     agent any
 
-    // 🔧 Tools Section
-    // Jenkins will automatically add Maven to PATH using the configured name in "Global Tool Configuration"
     tools {
-        maven 'Maven-3.9.9'
+        maven 'Maven-3.9.9' // Use your configured Maven installation name in Jenkins
     }
 
-    // 🌍 Environment Variables
     environment {
-        JFROG_CLI_PATH = 'C:\\jfrog\\jfrog.exe'     // Path to your installed JFrog CLI
-        JF_SERVER = 'LocalArtifactory'               // Server ID configured with jfrog c add
-        REPO = 'maven-releases'                      // Local repository name in Artifactory
+        JF_SERVER = 'LocalArtifactory' // JFrog Server ID from your CLI config
+        JF_PATH = 'C:\\jfrog\\jfrog.exe' // Full path to jfrog.exe
+        ARTIFACT_REPO = 'maven-repo-local' // JFrog repo where artifacts will be uploaded
     }
 
     stages {
-
-        // 🧾 1️⃣ Checkout Code from GitHub
         stage('Checkout Code') {
             steps {
-                echo "📦 Checking out source code from GitHub repository..."
-                checkout scm
+                echo '📦 Checking out code from GitHub repository...'
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/VeeranjaneyuluChalla/maven-project.git']]
+                ])
             }
         }
 
-        // ⚙️ 2️⃣ Build the Project with Maven
         stage('Build with Maven') {
             steps {
-                echo "⚙️ Building the project using Maven..."
+                echo '⚙️ Building the project using Maven...'
                 bat 'mvn clean install'
             }
         }
 
-        // 🔗 3️⃣ Check Connection to JFrog Artifactory
         stage('Check JFrog Connection') {
             steps {
-                echo "🔗 Pinging JFrog Artifactory server..."
-                bat "\"${JFROG_CLI_PATH}\" rt ping --server-id ${JF_SERVER}"
+                echo '🔗 Pinging JFrog Artifactory server...'
+                bat "\"${env.JF_PATH}\" rt ping --server-id ${env.JF_SERVER}"
             }
         }
 
-        // 📤 4️⃣ Upload Artifact to JFrog Artifactory
         stage('Upload Artifact to Artifactory') {
             steps {
-                echo "📤 Uploading the JAR file to JFrog Artifactory..."
-                bat """
-                    dir target
-                    "${JFROG_CLI_PATH}" rt upload "target/*.jar" "${REPO}/" --server-id ${JF_SERVER}
-                """
+                echo '🚀 Uploading artifact to JFrog Artifactory...'
+                bat "\"${env.JF_PATH}\" rt upload \"target/*.jar\" \"${env.ARTIFACT_REPO}/\" --server-id ${env.JF_SERVER}"
             }
         }
     }
 
-    // 🧩 5️⃣ Post Actions
     post {
         success {
-            echo "✅ Build and artifact upload completed successfully!"
+            echo '✅ Build and Upload completed successfully!'
         }
         failure {
-            echo "❌ Pipeline failed. Please check the Jenkins console output for details."
+            echo '❌ Pipeline failed. Please check the console output for details.'
         }
     }
 }
