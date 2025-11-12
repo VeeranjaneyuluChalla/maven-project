@@ -2,65 +2,50 @@ pipeline {
     agent any
 
     environment {
-        // Set up environment variables for reuse
-        JF_SERVER = 'LocalArtifactory'             // JFrog server ID (the one you configured in CLI)
-        JFROG_CLI = 'C:\\jfrog\\jfrog.exe'         // Path to JFrog CLI
-        MAVEN_HOME = 'C:\\Program Files\\Apache\\apache-maven-3.9.9' // Update if Maven installed elsewhere
+        JFROG_CLI_PATH = 'C:\\jfrog\\jfrog.exe'
+        JF_SERVER = 'LocalArtifactory'
+        REPO = 'maven-releases'  // Make sure you create this repo in Artifactory
     }
 
     stages {
-
-        stage('Checkout from GitHub') {
+        stage('Checkout Code') {
             steps {
-                echo '📥 Checking out source code from GitHub...'
+                echo "📦 Checking out code from GitHub..."
                 checkout scm
             }
         }
 
-        stage('Build using Maven') {
+        stage('Build with Maven') {
             steps {
-                echo '⚙️ Running Maven clean install...'
-                bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" clean install"
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                echo '🧪 Running Unit Tests...'
-                // Optionally run: bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" test"
-            }
-        }
-
-        stage('Package Application') {
-            steps {
-                echo '📦 Packaging JAR file...'
-                bat "\"${MAVEN_HOME}\\bin\\mvn.cmd\" package"
+                echo "⚙️ Building the project with Maven..."
+                bat 'mvn clean install'
             }
         }
 
         stage('Check JFrog Connection') {
             steps {
-                echo '🔗 Pinging JFrog Artifactory...'
-                bat "\"${JFROG_CLI}\" rt ping --server-id ${JF_SERVER}"
+                echo "🔗 Pinging JFrog Artifactory..."
+                bat "\"${JFROG_CLI_PATH}\" rt ping --server-id ${JF_SERVER}"
             }
         }
 
         stage('Upload Artifact to Artifactory') {
             steps {
-                script {
-                    echo '🚀 Uploading build artifact to JFrog Artifactory...'
-                    bat "\"${JFROG_CLI}\" rt upload \"target/*.jar\" \"maven-repo-local/maven-builds/\" --server-id ${JF_SERVER}"
-                }
+                echo "📤 Uploading JAR file to Artifactory..."
+                bat """
+                    dir target
+                    "${JFROG_CLI_PATH}" rt upload "target/*.jar" "${REPO}/" --server-id ${JF_SERVER}
+                """
             }
         }
     }
 
     post {
         success {
-            echo '✅ Build, Test, and Upload completed successfully!'
+            echo "✅ Build and Upload Successful!"
         }
         failure {
-            echo '❌ Pipeline failed. Please check the Jenkins console output for details.'
+            echo "❌ Pipeline failed. Please check the console output for details."
         }
     }
 }
