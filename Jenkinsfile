@@ -9,7 +9,7 @@ pipeline {
         ARTIFACTORY_REPO = 'maven-local'
         BUILD_NAME = 'maven-project-build'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
-        ARTIFACTORY_URL = 'http://192.168.215.98:8082/artifactory'
+        ARTIFACTORY_URL = 'http://192.168.215.98:8082'
     }
     stages {
         stage('Setup JFrog Config') {
