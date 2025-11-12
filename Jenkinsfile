@@ -15,9 +15,9 @@ pipeline {
         stage('Setup JFrog Config') {
             steps {
                 echo '🔧 Setting up JFrog configuration...'
-                withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_TOKEN')]) {
                     bat """
-                        "${JFROG_CLI_PATH}" config add ${JF_SERVER} --url=${ARTIFACTORY_URL} --user=%ARTIFACTORY_USER% --password=%ARTIFACTORY_PASSWORD% --interactive=false --overwrite
+                        "${JFROG_CLI_PATH}" config add ${JF_SERVER} --url=${ARTIFACTORY_URL} --access-token=%ARTIFACTORY_TOKEN% --interactive=false --overwrite
                     """
                 }
             }
