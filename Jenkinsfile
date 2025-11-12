@@ -6,7 +6,7 @@ pipeline {
     environment {
         JFROG_CLI_PATH = 'C:\\jfrog\\jfrog.exe'
         JF_SERVER = 'LocalArtifactory'
-        ARTIFACTORY_REPO = 'maven-local'
+        ARTIFACTORY_REPO = 'maven-repo-local'  // Changed from maven-local
         BUILD_NAME = 'maven-project-build'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
         ARTIFACTORY_URL = 'http://192.168.215.98:8082'
