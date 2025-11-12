@@ -6,11 +6,22 @@ pipeline {
     environment {
         JFROG_CLI_PATH = 'C:\\jfrog\\jfrog.exe'
         JF_SERVER = 'LocalArtifactory'
-        ARTIFACTORY_REPO = 'maven-local' // Change if you named your repo differently
+        ARTIFACTORY_REPO = 'maven-local'
         BUILD_NAME = 'maven-project-build'
         BUILD_NUMBER = "${env.BUILD_NUMBER}"
+        ARTIFACTORY_URL = 'http://192.168.215.98:8082/artifactory'
     }
     stages {
+        stage('Setup JFrog Config') {
+            steps {
+                echo '🔧 Setting up JFrog configuration...'
+                withCredentials([usernamePassword(credentialsId: 'jfrog-creds', usernameVariable: 'ARTIFACTORY_USER', passwordVariable: 'ARTIFACTORY_PASSWORD')]) {
+                    bat """
+                        "${JFROG_CLI_PATH}" config add ${JF_SERVER} --url=${ARTIFACTORY_URL} --user=%ARTIFACTORY_USER% --password=%ARTIFACTORY_PASSWORD% --interactive=false --overwrite
+                    """
+                }
+            }
+        }
         stage('Checkout Code') {
             steps {
                 echo '📦 Checking out code from GitHub...'
