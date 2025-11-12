@@ -2,23 +2,20 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven-3.9.9' // Use your configured Maven installation name in Jenkins
+        maven 'Maven-3.9.9'
     }
 
     environment {
-        JF_SERVER = 'LocalArtifactory' // JFrog Server ID from your CLI config
-        JF_PATH = 'C:\\jfrog\\jfrog.exe' // Full path to jfrog.exe
-        ARTIFACT_REPO = 'maven-repo-local' // JFrog repo where artifacts will be uploaded
+        JFROG_CLI_PATH = 'C:\\jfrog\\jfrog.exe'
+        JF_SERVER = 'LocalArtifactory'
+        ARTIFACTORY_REPO = 'maven-local' // Change if you use another repo name
     }
 
     stages {
         stage('Checkout Code') {
             steps {
                 echo '📦 Checking out code from GitHub repository...'
-                checkout([$class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    userRemoteConfigs: [[url: 'https://github.com/VeeranjaneyuluChalla/maven-project.git']]
-                ])
+                checkout scm
             }
         }
 
@@ -32,14 +29,17 @@ pipeline {
         stage('Check JFrog Connection') {
             steps {
                 echo '🔗 Pinging JFrog Artifactory server...'
-                bat "\"${env.JF_PATH}\" rt ping --server-id ${env.JF_SERVER}"
+                bat "\"${JFROG_CLI_PATH}\" rt ping --server-id ${JF_SERVER}"
             }
         }
 
         stage('Upload Artifact to Artifactory') {
             steps {
-                echo '🚀 Uploading artifact to JFrog Artifactory...'
-                bat "\"${env.JF_PATH}\" rt upload \"target/*.jar\" \"${env.ARTIFACT_REPO}/\" --server-id ${env.JF_SERVER}"
+                echo '🚀 Uploading JAR file to Artifactory...'
+                bat """
+                    dir target
+                    "${JFROG_CLI_PATH}" rt upload "target/*.jar" "${ARTIFACTORY_REPO}/jenkins-demo/" --server-id ${JF_SERVER} --flat=true
+                """
             }
         }
     }
